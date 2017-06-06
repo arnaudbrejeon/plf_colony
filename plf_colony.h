@@ -153,8 +153,20 @@
 namespace plf
 {
 
+// The memory policy returns true to free blocks
+struct policy_always_free {
+	static bool shouldFree() {
+		return true;
+	}
+};
 
-template <class element_type, class element_allocator_type = std::allocator<element_type>, typename element_skipfield_type = unsigned short > class colony : private element_allocator_type  // Empty base class optimisation - inheriting allocator functions
+struct policy_never_free {
+	static bool shouldFree() {
+		return false;
+	}
+};
+
+template <class element_type, class element_allocator_type = std::allocator<element_type>, typename element_skipfield_type = unsigned short, typename memory_policy = policy_always_free > class colony : private element_allocator_type  // Empty base class optimisation - inheriting allocator functions
 // Note: unsigned short is equivalent to uint_least16_t ie. Using 16-bit integer in best-case scenario, > or < 16-bit integer in case where platform doesn't support 16-bit types
 {
 public:
@@ -1622,7 +1634,7 @@ private:
     
     void remove_group(group_pointer_type group_pointer)
     {
-        bool freeMemory = false;
+        bool freeMemory = memory_policy::shouldFree();
         if (freeMemory)
         {
             PLF_COLONY_DESTROY(group_allocator_type, group_allocator_pair, group_pointer);
@@ -1669,7 +1681,7 @@ private:
     
     void clear_all_groups(bool force_memory_clear)
     {
-        bool freeMemory = false | force_memory_clear;
+        bool freeMemory = force_memory_clear || memory_policy::shouldFree();
         if(freeMemory) {
             destroy_all_data();
             return;
