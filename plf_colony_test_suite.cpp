@@ -64,7 +64,7 @@ void failpass(const char *test_type, bool condition)
 	else 
 	{
 		std::cout << "Fail" << std::endl;
-		std::cin.get(); 
+		std::cin.get();
 		abort(); 
 	}
 }
@@ -591,6 +591,7 @@ int main()
 			i_colony.change_minimum_group_size(3);
 
 			const unsigned int temp_capacity2 = static_cast<unsigned int>(i_colony.capacity());
+			i_colony.shrink_to_fit();
 			i_colony.reserve(1000);
 			failpass("Colony reserve test", temp_capacity2 != i_colony.capacity());
 			failpass("Colony reserve test2", i_colony.capacity() == 1000);
@@ -821,7 +822,7 @@ int main()
 					if (i_colony.size() != counter)
 					{
 						std::cout << "Fail. loop counter: " << loop_counter << ", internal_loop_counter: " << internal_loop_counter << "." << std::endl;
-						std::cin.get(); 
+						std::cin.get();
 						abort(); 
 					}
 					
