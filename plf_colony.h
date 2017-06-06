@@ -166,7 +166,7 @@ struct policy_never_free {
 	}
 };
 
-template <class element_type, class element_allocator_type = std::allocator<element_type>, typename element_skipfield_type = unsigned short, typename memory_policy = policy_always_free > class colony : private element_allocator_type  // Empty base class optimisation - inheriting allocator functions
+template <class element_type, class element_allocator_type = std::allocator<element_type>, typename element_skipfield_type = unsigned short, typename memory_policy = policy_never_free > class colony : private element_allocator_type  // Empty base class optimisation - inheriting allocator functions
 // Note: unsigned short is equivalent to uint_least16_t ie. Using 16-bit integer in best-case scenario, > or < 16-bit integer in case where platform doesn't support 16-bit types
 {
 public:
@@ -1548,7 +1548,7 @@ public:
 
 private:
 
-    group_pointer_type find_group_to_reclaim(const skipfield_type group_size)
+    group_pointer_type find_group_to_reclaim(const skipfield_type group_size) const
     {
         // TODO: should we free memory of groups with size smaller than group_size
         group_pointer_type group = first_empty_group;
@@ -1576,13 +1576,16 @@ private:
         {
             group_pointer_type allocated_group = PLF_COLONY_ALLOCATE(group_allocator_type, group_allocator_pair, 1, allocator_hint);
             
-            try {
+            try
+            {
 #ifdef PLF_COLONY_VARIADICS_SUPPORT
 				PLF_COLONY_CONSTRUCT(group_allocator_type, group_allocator_pair, allocated_group, group_size, previous);
 #else // C++03 only supports copy construction
 				PLF_COLONY_CONSTRUCT(group_allocator_type, group_allocator_pair, allocated_group, group(group_size, previous));
 #endif
-            } catch (...) {
+            }
+            catch (...)
+            {
                 PLF_COLONY_DEALLOCATE(group_allocator_type, group_allocator_pair, allocated_group, 1);
                 allocated_group = NULL;
                 throw;
@@ -1594,7 +1597,8 @@ private:
         if(group_to_reclaim == first_empty_group)
         {
             first_empty_group = group_to_reclaim->next_group;
-        } else
+        }
+        else
         {
             group_pointer_type group = first_empty_group;
             while(group->next_group != group_to_reclaim)
@@ -1604,22 +1608,23 @@ private:
             group->next_group = group_to_reclaim->next_group;
         }
         
-        // Re-init the reclaimed group
+        // Re-init the reclaimed group and insert it after previous
         group_to_reclaim->clear_skip_field();
         group_to_reclaim->number_of_elements = 1;
         group_to_reclaim->last_endpoint = group_to_reclaim->elements + 1;
-        group_to_reclaim->group_number = previous==NULL?0:previous->group_number+1;
+        group_to_reclaim->group_number = (previous==NULL) ? 0 : previous->group_number + 1;
+        group_to_reclaim->next_group = (previous==NULL) ? NULL : previous->next_group;
         group_to_reclaim->previous_group = previous;
-        group_to_reclaim->next_group = NULL;
         
         return group_to_reclaim;
     }
 
 
     
-    inline size_type empty_groups_capacity() const
+    size_type empty_groups_capacity() const
     {
         size_type capacity = 0;
+
         group_pointer_type empty_group = first_empty_group;
         while(empty_group != NULL)
         {
@@ -1643,12 +1648,13 @@ private:
         }
         
         // Search for a small group we can free
+        // Note: I think this is useful to remove small empty groups, but I wonder if we should keep it or not
         if(first_empty_group != NULL) {
             group_pointer_type previous = NULL;
             group_pointer_type group = first_empty_group;
             while(group != NULL)
             {
-                if(2*group->size < group_pointer->size)
+                if(2 * group->size < group_pointer->size)
                 {
                     break;
                 }
@@ -1662,7 +1668,8 @@ private:
                 if(previous == NULL)
                 {
                     first_empty_group = group->next_group;
-                } else
+                }
+                else
                 {
                     previous->next_group = group->next_group;
                     
@@ -1682,7 +1689,8 @@ private:
     void clear_all_groups(bool force_memory_clear)
     {
         bool freeMemory = force_memory_clear || memory_policy::shouldFree();
-        if(freeMemory) {
+        if(freeMemory) 
+        {
             destroy_all_data();
             return;
         }
