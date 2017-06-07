@@ -3253,6 +3253,13 @@ public:
 
 
 
+	void trim_trailing_groups()
+	{
+		destroy_all_empty_groups();
+	}
+
+
+
 	void reserve(skipfield_type reserve_amount)
 	{
 		assert(reserve_amount > 2);
