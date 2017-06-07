@@ -1680,6 +1680,42 @@ private:
             destroy_all_data();
             return;
         }
+
+        // Destroy all group elements
+	#ifdef PLF_COLONY_TYPE_TRAITS_SUPPORT
+		if (total_number_of_elements != 0 && !(std::is_trivially_destructible<element_type>::value))
+	#else // If compiler doesn't support traits, iterate regardless - trivial destructors will not be called, hopefully compiler will optimise the 'destruct' loop out for POD types
+		if (total_number_of_elements != 0)
+	#endif
+		{
+			total_number_of_elements = 0;
+			element_pointer_type element_pointer = begin_iterator.element_pointer;
+			skipfield_pointer_type skipfield_pointer = begin_iterator.skipfield_pointer;
+
+			group_pointer_type group = first_group;
+			while (group != NULL)
+			{
+				const element_pointer_type end_pointer = group->last_endpoint;
+
+				do
+				{
+					PLF_COLONY_DESTROY(element_allocator_type, (*this), element_pointer);
+					++skipfield_pointer;
+					element_pointer += 1 + *skipfield_pointer;
+					skipfield_pointer += *skipfield_pointer;
+				} while(element_pointer != end_pointer); // ie. beyond end of available data
+
+     			group = group->next_group;
+
+				if (group == NULL)
+				{
+					break;
+				}
+
+				element_pointer = group->elements + *(group->skipfield);
+				skipfield_pointer = group->skipfield + *(group->skipfield);
+			}
+		}
         
         if(first_empty_group == NULL)
         {
