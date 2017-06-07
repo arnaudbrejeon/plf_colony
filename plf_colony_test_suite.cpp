@@ -944,34 +944,90 @@ int main()
 		class RefCounter
 		{
 		public:
-			RefCounter(size_t &counter): _counter(counter) {
-				++_counter;
+            RefCounter(): _counter(nullptr){
+            }
+            
+			RefCounter(size_t &counter): _counter(&counter) {
+				++(*_counter);
 			}
 
-			RefCounter(const RefCounter& cc): _counter(cc._counter) {
-				++_counter;
-			}
-
+            RefCounter(const RefCounter& cc): _counter(cc._counter) {
+                ++(*_counter);
+            }
+            
+            RefCounter(RefCounter&& cc): _counter(cc._counter) {
+                cc._counter = nullptr;
+            }
+            
+            RefCounter& operator=(const RefCounter& cc) {
+                _counter = cc._counter;
+                ++(*_counter);
+                return *this;
+            }
+            
+            RefCounter& operator=(RefCounter&& cc) {
+                _counter = cc._counter;
+                cc._counter = nullptr;
+                return *this;
+            }
+            
 			~RefCounter() {
-				--_counter;
+                if(_counter != nullptr) {
+                    --(*_counter);
+                }
 			}
 
 		private:
-			size_t &_counter;
+			size_t *_counter;
 		};
 		size_t counter = 0;
 
-		colony<RefCounter> i_colony;
+        using rf_colony_type = colony<RefCounter, std::allocator<RefCounter>, unsigned short, false >;
+		rf_colony_type rf_colony;
+        rf_colony.change_group_sizes(10, 20);
 
 		for(size_t i=0; i<100; ++i) {
-			RefCounter count(counter);
-			i_colony.insert(count);
+			rf_colony.emplace(counter);
 		}
+        
+        failpass("Check size is 100", rf_colony.size() == 100);
+        failpass("Check counter is 100", counter == 100);
+       
+        rf_colony.introspect();
 
-		failpass("Check counter 100", counter == 100);
+        int nb_to_erase = 50;
+        rf_colony_type::iterator the_iterator = rf_colony.begin();
+        while(nb_to_erase != 0) {
+            the_iterator = rf_colony.erase(the_iterator);
+            --nb_to_erase;
+        }
+        
+        failpass("Check size is 50", rf_colony.size() == 50);
+        failpass("Check counter is 50", counter == 50);
+        
+        rf_colony.introspect();
 
-		i_colony.clear();
-		failpass("Check counter 0", counter == 0);
+		rf_colony.clear();
+		failpass("Check size is 0", rf_colony.size() == 0);
+		failpass("Check counter is 0", counter == 0);
+        
+        rf_colony.introspect();
+        
+        for(size_t i=0; i<50; ++i) {
+            RefCounter count(counter);
+            rf_colony.insert(count);
+        }
+
+        failpass("Check size is 50", rf_colony.size() == 50);
+        failpass("Check counter is 50", counter == 50);
+
+        rf_colony.emplace(RefCounter{counter});
+        rf_colony.emplace(counter);
+
+        failpass("Check size is 52", rf_colony.size() == 52);
+        failpass("Check counter is 52", counter == 52);
+
+        rf_colony.introspect();
 	}
 
 
