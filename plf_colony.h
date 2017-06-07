@@ -1656,7 +1656,6 @@ private:
 		if (total_number_of_elements != 0)
 	#endif
 		{
-			total_number_of_elements = 0;
 			element_pointer_type element_pointer = begin_iterator.element_pointer;
 			skipfield_pointer_type skipfield_pointer = begin_iterator.skipfield_pointer;
 
@@ -1685,9 +1684,12 @@ private:
 			}
 		}
         
+        total_number_of_elements = 0;
+        
         if(first_empty_group == NULL)
         {
             first_empty_group = first_group;
+            first_group = NULL;
             return;
         }
         
