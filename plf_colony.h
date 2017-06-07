@@ -1626,44 +1626,12 @@ private:
     
     void remove_group(group_pointer_type group_pointer)
     {
-        if (free_memory)
+		const bool shouldFree = free_memory || group_pointer->size < group_allocator_pair.max_elements_per_group;
+        if (shouldFree)
         {
             PLF_COLONY_DESTROY(group_allocator_type, group_allocator_pair, group_pointer);
             PLF_COLONY_DEALLOCATE(group_allocator_type, group_allocator_pair, group_pointer, 1);
             return;
-        }
-        
-        // Search for a small group we can free
-        // Note: I think this is useful to remove small empty groups, but I wonder if we should keep it or not
-        if(first_empty_group != NULL) {
-            group_pointer_type previous = NULL;
-            group_pointer_type group = first_empty_group;
-            while(group != NULL)
-            {
-                if(2 * group->size < group_pointer->size)
-                {
-                    break;
-                }
-                
-                previous = group;
-                group = group->next_group;
-            }
-            
-            if(group != NULL)
-            {
-                if(previous == NULL)
-                {
-                    first_empty_group = group->next_group;
-                }
-                else
-                {
-                    previous->next_group = group->next_group;
-                    
-                }
-                
-                PLF_COLONY_DESTROY(group_allocator_type, group_allocator_pair, group);
-                PLF_COLONY_DEALLOCATE(group_allocator_type, group_allocator_pair, group, 1);
-            }
         }
         
         group_pointer->next_group = first_empty_group;
