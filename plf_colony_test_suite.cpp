@@ -938,8 +938,45 @@ int main()
 		#endif
 	}
 
+	{
+		title2("Check clear destructor calls");
+
+		class RefCounter
+		{
+		public:
+			RefCounter(size_t &counter): _counter(counter) {
+				++_counter;
+			}
+
+			RefCounter(const RefCounter& cc): _counter(cc._counter) {
+				++_counter;
+			}
+
+			~RefCounter() {
+				--_counter;
+			}
+
+		private:
+			size_t &_counter;
+		};
+		size_t counter = 0;
+
+		colony<RefCounter> i_colony;
+
+		for(size_t i=0; i<100; ++i) {
+			RefCounter count(counter);
+			i_colony.insert(count);
+		}
+
+		failpass("Check counter 100", counter == 100);
+
+		i_colony.clear();
+		failpass("Check counter 0", counter == 0);
+	}
+
+
 	title1("Test Suite PASS - Press ENTER to Exit");
-	cin.get();
+	//cin.get();
 
 	return 0;
 }
