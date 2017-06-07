@@ -4164,6 +4164,25 @@ public:
 		PLF_COLONY_DEALLOCATE(element_pointer_allocator_type, erased_locations, element_pointers, total_number_of_elements);
 	}
 
+public:
+    
+    void introspect() const {
+        std::cout << "Groups:\n";
+        group_pointer_type group = first_group;
+        while(group != NULL) {
+            std::cout << '\t' << group->group_number << " : " << group->number_of_elements << " / " << group->size << '\n';
+            group = group->next_group;
+        }
+    
+        if(first_empty_group != NULL) {
+            std::cout << "Empty groups:\n";
+            group = first_empty_group;
+            while(group != NULL) {
+                std::cout << '\t' << group->group_number << " : " << group->size << '\n';
+                group = group->next_group;
+            }
+        }
+    }
 
 };	// colony
 
