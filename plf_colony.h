@@ -1370,6 +1370,7 @@ public:
 		{
 			source.first_group = NULL;
 			source.total_number_of_elements = 0; // Nullifying the other data members is unnecessary - technically all can be removed except first_group NULL and total_number_of_elements 0, to allow for clean destructor usage
+            source.first_empty_group = NULL;
 		}
 		
 		
@@ -1387,6 +1388,7 @@ public:
 		{
 			source.first_group = NULL;
 			source.total_number_of_elements = 0; // Nullifying the other data members is unnecessary - technically all can be removed except first_group NULL and total_number_of_elements 0, to allow for clean destructor usage
+            source.first_empty_group = NULL;
 		}
 	#endif
 
@@ -3199,6 +3201,7 @@ public:
 
 			source.first_group = NULL;
 			source.total_number_of_elements = 0; // Nullifying the other data members is unnecessary - technically all can be removed except first_group NULL and total_number_of_elements 0, to allow for clean destructor usage
+            source.first_empty_group = NULL;
 			return *this;
 		}
 	#endif
